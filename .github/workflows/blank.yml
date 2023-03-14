@@ -17,22 +17,17 @@ jobs:
           --health-retries 5
 
     steps:
-      #- uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       - name: install postgres client
         run: |
-          apt-get update && apt-get --no-install-recommends -y postgresql-client
+          sudo apt-get update && sudo apt-get --no-install-recommends -y postgresql-client
       - name: get data
         run: |
           wget -q -O - https://iptoasn.com/data/ip2country-v4.tsv.gz|gunzip > /tmp/ip2country-v4.tsv
           wget -q -O - https://iptoasn.com/data/ip2country-v6.tsv.gz|gunzip > /tmp/ip2country-v6.tsv
       - name: use magic
         run: |
-          psql ipdata -c "create table iptable(ipstart inet not null,ipend inet not null,country text not null);"
-          psql ipdata -c "copy iptable from '/tmp/ip2country-v4.tsv' delimiter E'\t';"
-          psql ipdata -c "copy iptable from '/tmp/ip2country-v6.tsv' delimiter E'\t';"
-          psql ipdata -c "copy (select country,inet_merge(ipstart,ipend) from iptable) to '/tmp/export'"
-          head /tmp/export
-          tail /tmp/export
+          su postgres -c 'bash data.sh'
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
