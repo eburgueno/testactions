@@ -4,6 +4,35 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ipdata
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      - uses: browser-actions/setup-chrome@v1
-      - run: chrome --headless https://radar.cloudflare.com/charts/VerifiedBotsTableCard/fetch
+      #- uses: actions/checkout@v3
+      - name: install postgres client
+        run: |
+          apt-get update && apt-get --no-install-recommends -y postgresql-client
+      - name: get data
+        run: |
+          wget -q -O - https://iptoasn.com/data/ip2country-v4.tsv.gz|gunzip > /tmp/ip2country-v4.tsv
+          wget -q -O - https://iptoasn.com/data/ip2country-v6.tsv.gz|gunzip > /tmp/ip2country-v6.tsv
+      - name: use magic
+        run: |
+          psql ipdata -c "create table iptable(ipstart inet not null,ipend inet not null,country text not null);"
+          psql ipdata -c "copy iptable from '/tmp/ip2country-v4.tsv' delimiter E'\t';"
+          psql ipdata -c "copy iptable from '/tmp/ip2country-v6.tsv' delimiter E'\t';"
+          psql ipdata -c "copy (select country,inet_merge(ipstart,ipend) from iptable) to '/tmp/export'"
+          head /tmp/export
+          tail /tmp/export
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
