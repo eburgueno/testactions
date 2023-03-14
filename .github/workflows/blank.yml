@@ -27,7 +27,7 @@ jobs:
           wget -q -O - https://iptoasn.com/data/ip2country-v6.tsv.gz|gunzip > /tmp/ip2country-v6.tsv
       - name: use magic
         run: |
-          su postgres -c 'bash data.sh'
+          sudo -u postgres bash data.sh
         env:
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
