@@ -4,7 +4,7 @@ import shutil
 import requests
 import gzip
 import ipaddress
-import subprocess
+import netaddr
 
 GEO_IPS_DIR = "geo-ips"
 
@@ -38,9 +38,14 @@ for filename in os.listdir(GEO_IPS_DIR):
   filepath = os.path.join(GEO_IPS_DIR, filename)
   if os.path.isfile(filepath):
     with open(filepath, 'r') as f:
-      # Call the aggregate utility against the current file
-      output = subprocess.check_output(["aggregate", "-q", "-t"], stdin=f)
+      lines = f.read().splitlines()
+      cidrs = []
+      for line in lines:
+        cidrs.append(netaddr.IPNetwork(line))
+
+      supercidrs = netaddr.cidr_merge(cidrs)
 
     # Write the aggregated output back to the file
     with open(filepath, 'w') as f:
-      f.write(output.decode())
+      for cidr in supercidrs:
+        f.write(str(cidr) + "\n")

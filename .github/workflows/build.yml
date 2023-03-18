@@ -10,12 +10,12 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install utils
-        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install aggregate jq
+        run: sudo apt-get update && sudo apt-get -y --no-install-recommends install aggregate jq && pip3 install netaddr
 
       - name: Run our scripts
         id: release
         run: |
-          ./3-gen-public-cloud-ranges.py
+          #./3-gen-public-cloud-ranges.py
           ./6-get-geo-ranges.py
           echo "builddate=$(date -Is)" >> $GITHUB_OUTPUT
           echo "epochdate=$(date +%s)" >> $GITHUB_OUTPUT
